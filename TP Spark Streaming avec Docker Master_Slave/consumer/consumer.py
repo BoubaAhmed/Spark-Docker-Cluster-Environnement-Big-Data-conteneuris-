@@ -1,35 +1,30 @@
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
+import logging
 
 def setup_logging():
-    import logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(message)s'
+        format="%(asctime)s [%(levelname)s] %(message)s"
     )
 
-def main():
+def process_stream():
     setup_logging()
     
-    # Configuration Spark
     sc = SparkContext(appName="RealTimeSquareCalculator")
     sc.setLogLevel("WARN")
-    ssc = StreamingContext(sc, batchDuration=1)  # Micro-batch de 1 seconde
-
-    # Flux d'entrée
+    ssc = StreamingContext(sc, batchDuration=1)
+    
     lines = ssc.socketTextStream("producer", 9999)
     
-    # Traitement
-    numbers = lines.map(lambda x: int(x))
+    numbers = lines.map(lambda x: int(x.strip()))
     squares = numbers.map(lambda n: (n, n**2))
     
-    # Affichage des résultats
     squares.pprint(num=10)
     
-    # Démarrage
     ssc.start()
-    print("🎯 Consommateur prêt à traiter les données...")
+    print("🎯 Consumer ready to process data...")
     ssc.awaitTermination()
 
 if __name__ == "__main__":
-    main()
+    process_stream()
